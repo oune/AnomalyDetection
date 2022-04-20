@@ -4,9 +4,21 @@ __pycache__/
 *$py.class
 
 # Files
-.json
-.csv
-.zip
+*.json
+*.csv
+*.zip
+*.txt
+*.csv
+checkpoint
+*.h5
+*.index
+*.v2
+*.PyBuilder
+*.png
+*.jpg
+*.pb
+variables.*
+checkpoint.*
 
 # C extensions
 *.so
