@@ -142,6 +142,7 @@ def data_split_to_chunk(dir_path : str, is_normal : bool):
         data_2_re = data_2.reshape(int(len(data_2)/68000), 68000)
         data_3_re = data_3.reshape(int(len(data_3)/68000), 68000)
         
+        ## dynamic 
         if len(data_0_re) == 16:
             dir_name = 20220112
         elif len(data_0_re) == 741:
@@ -150,6 +151,7 @@ def data_split_to_chunk(dir_path : str, is_normal : bool):
             dir_name = 20220323
         elif len(data_0_re) == 1460:
             dir_name = 20220331
+        ##
 
         for idx, (chunk_0, chunk_1, chunk_2, chunk_3) in enumerate(zip(data_0_re, data_1_re, data_2_re, data_3_re)):
             chunk_0_df = pd.DataFrame(chunk_0)
