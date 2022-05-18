@@ -5,6 +5,8 @@ from tqdm import tqdm
 import os
 import glob
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler
+import seaborn as sns
 
 ## normal / abnormal (sample rate : 4000 -> 17s)
 # 20211015 48 / -
@@ -92,7 +94,9 @@ def load_data_raw(dir_path : str, is_normal : bool, is_train : bool, stop_idx : 
     else:
         return data_0, data_1, data_2, data_3
 
-def data_split_to_chunk(dir_path : str, is_normal : bool):
+def data_split_to_chunk(dir_path : str, is_normal : bool, save_dir_path : str):
+    os.makedirs(save_dir_path, exist_ok=True)
+
     dir_list = os.listdir(dir_path)
     data_0_all, data_1_all, data_2_all, data_3_all = [], [], [], []
 
@@ -103,12 +107,14 @@ def data_split_to_chunk(dir_path : str, is_normal : bool):
 
     for idx, dir in enumerate(tqdm(dir_list)):
         file_path_list = glob.glob(rf"{dir_path}\{dir}\{file_name}")
+        print(dir)
 
         if file_path_list != []:
             data_0_all.append(file_path_list[0])
             data_1_all.append(file_path_list[1])
             data_2_all.append(file_path_list[2])
             data_3_all.append(file_path_list[3])
+
 
     data_0_list, data_1_list, data_2_list, data_3_list = [], [], [], []
 
@@ -141,7 +147,7 @@ def data_split_to_chunk(dir_path : str, is_normal : bool):
         data_1_re = data_1.reshape(int(len(data_1)/68000), 68000)
         data_2_re = data_2.reshape(int(len(data_2)/68000), 68000)
         data_3_re = data_3.reshape(int(len(data_3)/68000), 68000)
-        
+
         ## dynamic 
         if len(data_0_re) == 16:
             dir_name = 20220112
@@ -153,16 +159,25 @@ def data_split_to_chunk(dir_path : str, is_normal : bool):
             dir_name = 20220331
         ##
 
-        for idx, (chunk_0, chunk_1, chunk_2, chunk_3) in enumerate(zip(data_0_re, data_1_re, data_2_re, data_3_re)):
-            chunk_0_df = pd.DataFrame(chunk_0)
-            chunk_1_df = pd.DataFrame(chunk_1)
-            chunk_2_df = pd.DataFrame(chunk_2)
-            chunk_3_df = pd.DataFrame(chunk_3)
+        save_idx = 0
+        for (chunk_0, chunk_1, chunk_2, chunk_3) in zip(data_0_re, data_1_re, data_2_re, data_3_re):
+            chunk_0_check = np.mean(np.abs(chunk_0), axis=0).reshape(-1,1)
+            chunk_1_check = np.mean(np.abs(chunk_1), axis=0).reshape(-1,1)
+            chunk_2_check = np.mean(np.abs(chunk_2), axis=0).reshape(-1,1)
+            chunk_3_check = np.mean(np.abs(chunk_3), axis=0).reshape(-1,1)
 
-            chunk_0_df.to_csv(rf'D:\Anomaly-Dataset\Abnormal\abnormal_0_{dir_name}_{idx}.csv', index=False)
-            chunk_1_df.to_csv(rf'D:\Anomaly-Dataset\Abnormal\abnormal_1_{dir_name}_{idx}.csv', index=False)
-            chunk_2_df.to_csv(rf'D:\Anomaly-Dataset\Abnormal\abnormal_2_{dir_name}_{idx}.csv', index=False)
-            chunk_3_df.to_csv(rf'D:\Anomaly-Dataset\Abnormal\abnormal_3_{dir_name}_{idx}.csv', index=False)
+            if chunk_0_check >= 0.003 and chunk_1_check >= 0.003 and chunk_2_check >= 0.003 and chunk_3_check >= 0.003:
+                chunk_0_df = pd.DataFrame(chunk_0)
+                chunk_1_df = pd.DataFrame(chunk_1)
+                chunk_2_df = pd.DataFrame(chunk_2)
+                chunk_3_df = pd.DataFrame(chunk_3)
+
+                chunk_0_df.to_csv(rf'{save_dir_path}\abnormal_0_{dir_name}_{save_idx}.csv', index=False)
+                chunk_1_df.to_csv(rf'{save_dir_path}\abnormal_1_{dir_name}_{save_idx}.csv', index=False)
+                chunk_2_df.to_csv(rf'{save_dir_path}\abnormal_2_{dir_name}_{save_idx}.csv', index=False)
+                chunk_3_df.to_csv(rf'{save_dir_path}\abnormal_3_{dir_name}_{save_idx}.csv', index=False)
+
+                save_idx += 1
 
 def data_to_fft(data_0, data_1, data_2, data_3):
     data_fft_0 = np.fft.fft(data_0) / len(data_0)
@@ -207,3 +222,40 @@ def stack_data(arr, axis):
     data = np.stack(arr, axis=axis)
 
     return data
+
+def check_data_to_sacler(train_data, test_data):
+    x = pd.DataFrame({
+        'x1': train_data.squeeze(-1),
+        'x2': test_data.squeeze(-1),
+        })
+
+    scaler = RobustScaler()
+    robust_df = scaler.fit_transform(x)
+    robust_df = pd.DataFrame(robust_df, columns =['x1', 'x2'])
+    
+    scaler = StandardScaler()
+    standard_df = scaler.fit_transform(x)
+    standard_df = pd.DataFrame(standard_df, columns =['x1', 'x2'])
+    
+    scaler = MinMaxScaler()
+    minmax_df = scaler.fit_transform(x)
+    minmax_df = pd.DataFrame(minmax_df, columns =['x1', 'x2'])
+    
+    fig, (ax1, ax2, ax3, ax4) = plt.subplots(ncols = 4, figsize =(20, 5))
+    ax1.set_title('Before Scaling')
+    
+    sns.kdeplot(x['x1'], ax = ax1, color ='r')
+    sns.kdeplot(x['x2'], ax = ax1, color ='b')
+    ax2.set_title('After Robust Scaling')
+    
+    sns.kdeplot(robust_df['x1'], ax = ax2, color ='red')
+    sns.kdeplot(robust_df['x2'], ax = ax2, color ='blue')
+    ax3.set_title('After Standard Scaling')
+    
+    sns.kdeplot(standard_df['x1'], ax = ax3, color ='black')
+    sns.kdeplot(standard_df['x2'], ax = ax3, color ='g')
+    ax4.set_title('After Min-Max Scaling')
+    
+    sns.kdeplot(minmax_df['x1'], ax = ax4, color ='black')
+    sns.kdeplot(minmax_df['x2'], ax = ax4, color ='g')
+    plt.show()
