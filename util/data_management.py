@@ -107,14 +107,12 @@ def data_split_to_chunk(dir_path : str, is_normal : bool, save_dir_path : str):
 
     for idx, dir in enumerate(tqdm(dir_list)):
         file_path_list = glob.glob(rf"{dir_path}\{dir}\{file_name}")
-        print(dir)
 
         if file_path_list != []:
             data_0_all.append(file_path_list[0])
             data_1_all.append(file_path_list[1])
             data_2_all.append(file_path_list[2])
             data_3_all.append(file_path_list[3])
-
 
     data_0_list, data_1_list, data_2_list, data_3_list = [], [], [], []
 
