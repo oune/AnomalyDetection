@@ -40,19 +40,18 @@ class DataGenerator(Sequence):
             data_paths_2 = sorted(glob.glob(dataset_path + '\\Normal\\*_2_*.csv'))
             data_paths_3 = sorted(glob.glob(dataset_path + '\\Normal\\*_3_*.csv'))
 
-            # split_idx = int(len(data_paths_0)*self.split[0])
-            self.split_idx = int(len(data_paths_0)*self.split[0])
+            split_idx = int(len(data_paths_0)*self.split[0])
 
-            # if self.train_mode == TrainMode.TRAIN.value:
-            #     data_paths_0 = data_paths_0[:split_idx]
-            #     data_paths_1 = data_paths_1[:split_idx]
-            #     data_paths_2 = data_paths_2[:split_idx]
-            #     data_paths_3 = data_paths_3[:split_idx]
-            # elif self.train_mode == TrainMode.VALIDATION.value:
-            #     data_paths_0 = data_paths_0[split_idx:]
-            #     data_paths_1 = data_paths_1[split_idx:]
-            #     data_paths_2 = data_paths_2[split_idx:]
-            #     data_paths_3 = data_paths_3[split_idx:]
+            if self.train_mode == TrainMode.TRAIN.value:
+                data_paths_0 = data_paths_0[:split_idx]
+                data_paths_1 = data_paths_1[:split_idx]
+                data_paths_2 = data_paths_2[:split_idx]
+                data_paths_3 = data_paths_3[:split_idx]
+            elif self.train_mode == TrainMode.VALIDATION.value:
+                data_paths_0 = data_paths_0[split_idx:]
+                data_paths_1 = data_paths_1[split_idx:]
+                data_paths_2 = data_paths_2[split_idx:]
+                data_paths_3 = data_paths_3[split_idx:]
 
             self.data_paths = list(zip(data_paths_0, data_paths_1, data_paths_2, data_paths_3))
         else:
@@ -116,17 +115,6 @@ class DataGenerator(Sequence):
             data_1 = np.array(data_1.values.tolist()[1:])
             data_2 = np.array(data_2.values.tolist()[1:])
             data_3 = np.array(data_3.values.tolist()[1:])
-
-            if self.train_mode == TrainMode.TRAIN.value:
-                data_0 = data_0[:self.split_idx]
-                data_1 = data_1[:self.split_idx]
-                data_2 = data_2[:self.split_idx]
-                data_3 = data_3[:self.split_idx]
-            elif self.train_mode == TrainMode.VALIDATION.value:
-                data_0 = data_0[self.split_idx:]
-                data_1 = data_1[self.split_idx:]
-                data_2 = data_2[self.split_idx:]
-                data_3 = data_3[self.split_idx:]
 
             data_0 = np.mean(np.abs(data_0), axis=0)
             data_1 = np.mean(np.abs(data_1), axis=0)
