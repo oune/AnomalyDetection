@@ -3,7 +3,7 @@ import enum
 import glob
 import pandas as pd
 import numpy as np
-from util.data_management import concate_data, stack_data
+from data_management import concate_data, stack_data
 import math
 import random
 from sklearn.preprocessing import Normalizer, MinMaxScaler, RobustScaler, StandardScaler
